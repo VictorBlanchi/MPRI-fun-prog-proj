@@ -52,11 +52,37 @@ module Make (T : Utils.Functor) = struct
         [∃(?w1 = ?v2 -> ?v3). ∃(?w2 = ?v1 -> ?w1). k ?w2], or equivalently
         [∃?w3 ?w4. ?w3 = ?v1 -> ?w4 ∧ ?w4 = ?v2 -> ?v3 ∧ k ?w3].
   *)
-  let rec bind (ty : STLC.ty) (k : Constraint.variable -> ('a, 'e) t) :
-      ('a, 'e) t =
-    (* Feel free to postpone implementing this function
-       until you implement the Annot case below. *)
-    Utils.not_yet "Infer.bind" (ty, k, fun () -> bind)
+  let rec bind :
+        'a. STLC.ty -> (Constraint.variable -> 'a constraint_) -> 'a constraint_
+      =
+   fun ty k ->
+    match ty with
+    | STLC.Constr (Structure.Var x) ->
+        let wx = Var.fresh (Structure.TyVar.name x) in
+        exist wx ~struc:(Some (Var x)) (k wx)
+    | STLC.Constr (Structure.Arrow (ty1, ty2)) ->
+        let w1 = Var.fresh "w1" in
+        let w2 = Var.fresh "w2" in
+        let w = Var.fresh "w" in
+        let c =
+          let+ _ = bind ty1 (fun w -> eq w w1)
+          and+ _ = bind ty2 (fun w -> eq w w2)
+          and+ ck = k w in
+          ck
+        in
+        exist w1 (exist w2 (exist w ~struc:(Some (Arrow (w1, w2))) c))
+    | STLC.Constr (Structure.Prod ts) ->
+        let ty1, ty2 = assume_pair ts in
+        let w1 = Var.fresh "w1" in
+        let w2 = Var.fresh "w2" in
+        let w = Var.fresh "w" in
+        let c =
+          let+ _ = bind ty1 (fun w -> eq w w1)
+          and+ _ = bind ty2 (fun w -> eq w w2)
+          and+ ck = k w in
+          ck
+        in
+        exist w1 (exist w2 (exist w ~struc:(Some (Prod [ w1; w2 ])) c))
 
   (** This function generates a typing constraint from an untyped term:
       [has_type env t w] generates a constraint [C] which contains [w] as
@@ -105,12 +131,24 @@ module Make (T : Utils.Functor) = struct
         in
         exist wx (exist wt ~struc:(Some (Prod [ wx ])) c_let)
     | Untyped.Annot (t, ty) ->
-        Utils.not_yet "Infer.has_type: Let case"
-          (env, t, ty, bind, fun () -> has_type)
+        let f wt =
+          let+ t = has_type env t wt and+ _ = eq wt w in
+          t
+        in
+        bind ty f
     | Untyped.Tuple ts ->
         let t1, t2 = assume_pair ts in
-        Utils.not_yet "Infer.has_type: Let case"
-          (env, t1, t2, fun () -> has_type)
+        let w1 = Var.fresh "w1" in
+        let w2 = Var.fresh "w2" in
+        let wprod = Var.fresh "wprod" in
+        let c_tuple =
+          let+ _ = eq w wprod
+          and+ t1 = has_type env t1 w1
+          and+ t2 = has_type env t2 w2 in
+          STLC.Tuple [ t1; t2 ]
+        in
+        exist w1
+          (exist w2 (exist wprod ~struc:(Some (Prod [ w1; w2 ])) c_tuple))
     | Untyped.LetTuple (xs, t, u) ->
         let x1, x2 = assume_pair xs in
         let wx1 = Var.fresh (Untyped.Var.name x1) in
