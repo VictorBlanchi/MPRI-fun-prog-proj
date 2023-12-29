@@ -70,11 +70,23 @@ module Make(T : Utils.Functor) = struct
   let rec has_type (env : env) (t : Untyped.term) (w : variable) : (STLC.term, err) t =
     match t with
     | Untyped.Var x ->
-      Utils.not_yet "Infer.has_type: Var case" (env, t, w, x)
+       let+ _ = eq (Env.find x env) w in
+       STLC.Var x
     | Untyped.App (t, u) ->
-      Utils.not_yet "Infer.has_type: App case" (env, t, u, fun () -> has_type)
+       let wt = Var.fresh "wt" in
+       let wu = Var.fresh "wu" in 
+       let+ t = Exist (wt, Some (Arrow (wu , w)), has_type env t wt)
+       and+ u = Exist (wu, None, has_type env u wu) in
+       STLC.App (t, u)
     | Untyped.Abs (x, t) ->
-      Utils.not_yet "Infer.has_type: Abs case" (env, x, t, fun () -> has_type)
+       let wx = Var.fresh (Untyped.Var.name x) in
+       let warr = Var.fresh "warr" in
+       let wt = Var.fresh "wt" in
+       let+ x = Exist (wx, None, Ret (fun _ -> x ))
+       and+ t = Exist (wt , None, has_type (Env.add x wx env) t wt)
+       and+ _ = Exist (warr, Some (Arrow (wx, wt)), Ret (fun _ -> ()))
+       and+ tyx = decode wx in
+       STLC.Abs (x , tyx ,t )
     | Untyped.Let (x, t, u) ->
       Utils.not_yet "Infer.has_type: Let case" (env, x, t, u, fun () -> has_type)
     | Untyped.Annot (t, ty) ->
