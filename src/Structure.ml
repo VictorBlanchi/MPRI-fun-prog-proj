@@ -19,11 +19,11 @@
     just like ['v Untyped.term] -- see the documentation there.)
 *)
 
-module TyVar = Utils.Variables()
+module TyVar = Utils.Variables ()
 
 type ('v, 'a) t_ =
   | Var of 'v
-    (** Note: a type variable here represents a rigid/opaque/abstract type [α, β...],
+      (** Note: a type variable here represents a rigid/opaque/abstract type [α, β...],
         not a flexible inference variable like [?w] in constraints.
 
         For example, for two distinct type variables [α, β]
@@ -37,7 +37,9 @@ type 'a t = (TyVar.t, 'a) t_
 
 let iter f = function
   | Var _alpha -> ()
-  | Arrow (t1, t2) -> f t1; f t2
+  | Arrow (t1, t2) ->
+      f t1;
+      f t2
   | Prod ts -> List.iter f ts
 
 let map f = function
@@ -45,8 +47,23 @@ let map f = function
   | Arrow (t1, t2) -> Arrow (f t1, f t2)
   | Prod ts -> Prod (List.map f ts)
 
-let merge f s1 s2 =
-    Utils.not_yet "Structure.merge" (f, s1, s2)
+let merge (f : 'a -> 'b -> 'c) (s1 : 'a t) (s2 : 'b t) : 'c t option =
+  match s1 with
+  | Var v1 -> (
+      match s2 with
+      | Var v2 -> if v1 = v2 then Some (Var v1) else None
+      | Arrow (_, _) | Prod _ -> None)
+  | Arrow (x1, x2) -> (
+      match s2 with
+      | Var _ -> None
+      | Arrow (y1, y2) -> Some (Arrow (f x1 y1, f x2 y2))
+      | Prod _ -> None)
+  | Prod p -> (
+      match s2 with
+      | Var _ | Arrow (_, _) -> None
+      | Prod q ->
+          if List.length p = List.length q then Some (Prod (List.map2 f p q))
+          else None)
 
 let global_tyvar : string -> TyVar.t =
   (* There are no binders for type variables, which are scoped
@@ -56,9 +73,9 @@ let global_tyvar : string -> TyVar.t =
     match Hashtbl.find tenv alpha with
     | alpha_var -> alpha_var
     | exception Not_found ->
-      let alpha_var = TyVar.fresh alpha in
-      Hashtbl.add tenv alpha alpha_var;
-      alpha_var
+        let alpha_var = TyVar.fresh alpha in
+        Hashtbl.add tenv alpha alpha_var;
+        alpha_var
 
 let freshen freshen = function
   | Var alpha -> Var (global_tyvar alpha)
