@@ -51,38 +51,65 @@ module Make (T : Utils.Functor) = struct
       [bind ty k] could be the constraint
         [∃(?w1 = ?v2 -> ?v3). ∃(?w2 = ?v1 -> ?w1). k ?w2], or equivalently
         [∃?w3 ?w4. ?w3 = ?v1 -> ?w4 ∧ ?w4 = ?v2 -> ?v3 ∧ k ?w3].
-  *)
-  let rec bind :
-        'a. STLC.ty -> (Constraint.variable -> 'a constraint_) -> 'a constraint_
-      =
-   fun ty k ->
-    match ty with
-    | STLC.Constr (Structure.Var x) ->
-        let wx = Var.fresh (Structure.TyVar.name x) in
-        exist wx ~struc:(Some (Var x)) (k wx)
-    | STLC.Constr (Structure.Arrow (ty1, ty2)) ->
-        let w1 = Var.fresh "w1" in
-        let w2 = Var.fresh "w2" in
-        let w = Var.fresh "w" in
-        let c =
-          let+ _ = bind ty1 (fun w -> eq w w1)
-          and+ _ = bind ty2 (fun w -> eq w w2)
-          and+ ck = k w in
-          ck
-        in
-        exist w1 (exist w2 (exist w ~struc:(Some (Arrow (w1, w2))) c))
-    | STLC.Constr (Structure.Prod ts) ->
-        let ty1, ty2 = assume_pair ts in
-        let w1 = Var.fresh "w1" in
-        let w2 = Var.fresh "w2" in
-        let w = Var.fresh "w" in
-        let c =
-          let+ _ = bind ty1 (fun w -> eq w w1)
-          and+ _ = bind ty2 (fun w -> eq w w2)
-          and+ ck = k w in
-          ck
-        in
-        exist w1 (exist w2 (exist w ~struc:(Some (Prod [ w1; w2 ])) c))
+   *)
+
+  let bind (ty : STLC.ty) (f : Constraint.variable -> ('a, 'e) Constraint.t) =
+    let i = ref 0 in
+    let fresh () =
+      let j = !i in
+      i := !i + 1;
+      Var.fresh ("w" ^ string_of_int j)
+    in
+    let rec help w c = function
+      | STLC.Constr (Structure.Var x) ->
+          exist w ~struc:(Some (Structure.Var x)) c
+      | STLC.Constr (Structure.Arrow (ty1, ty2)) ->
+          let w1 = fresh () in
+          let w2 = fresh () in
+          let c1 = exist w ~struc:(Some (Arrow (w1, w2))) c in
+          let c2 = help w2 c1 ty2 in
+          help w1 c2 ty1
+      | STLC.Constr (Structure.Prod ts) ->
+          let ty1, ty2 = assume_pair ts in
+          let w1, w2 = (fresh (), fresh ()) in
+          let c1 = exist w ~struc:(Some (Prod [ w1; w2 ])) c in
+          let c2 = help w1 c1 ty1 in
+          help w2 c2 ty2
+    in
+    let w = fresh () in
+    help w (f w) ty
+
+  (* let rec bind' : *)
+  (*       'a. STLC.ty -> (Constraint.variable -> 'a constraint_) -> 'a constraint_ *)
+  (*     = *)
+  (*  fun ty k -> *)
+  (*   match ty with *)
+  (*   | STLC.Constr (Structure.Var x) -> *)
+  (*       let wx = Var.fresh (Structure.TyVar.name x) in *)
+  (*       exist wx ~struc:(Some (Var x)) (k wx) *)
+  (*   | STLC.Constr (Structure.Arrow (ty1, ty2)) -> *)
+  (*       let w1 = Var.fresh "w1" in *)
+  (*       let w2 = Var.fresh "w2" in *)
+  (*       let w = Var.fresh "w" in *)
+  (*       let c = *)
+  (*         let+ _ = bind ty1 (fun w -> eq w w1) *)
+  (*         and+ _ = bind ty2 (fun w -> eq w w2) *)
+  (*         and+ ck = k w in *)
+  (*         ck *)
+  (*       in *)
+  (*       exist w1 (exist w2 (exist w ~struc:(Some (Arrow (w1, w2))) c)) *)
+  (*   | STLC.Constr (Structure.Prod ts) -> *)
+  (*       let ty1, ty2 = assume_pair ts in *)
+  (*       let w1 = Var.fresh "w1" in *)
+  (*       let w2 = Var.fresh "w2" in *)
+  (*       let w = Var.fresh "w" in *)
+  (*       let c = *)
+  (*         let+ _ = bind ty1 (fun w -> eq w w1) *)
+  (*         and+ _ = bind ty2 (fun w -> eq w w2) *)
+  (*         and+ ck = k w in *)
+  (*         ck *)
+  (*       in *)
+  (*       exist w1 (exist w2 (exist w ~struc:(Some (Prod [ w1; w2 ])) c)) *)
 
   (** This function generates a typing constraint from an untyped term:
       [has_type env t w] generates a constraint [C] which contains [w] as

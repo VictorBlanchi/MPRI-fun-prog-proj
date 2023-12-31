@@ -1,25 +1,18 @@
-type 'a t = MSeq_not_implemented_yet
+type 'a t = 'a Seq.t
 
-let map (f : 'a -> 'b) (s : 'a t) : 'b t =
-  Utils.not_yet "MSeq.map" (f, s)
-
-let return (x : 'a) : 'a t =
-  Utils.not_yet "MSeq.return" x
-
-let bind (sa : 'a t) (f : 'a -> 'b t) : 'b t =
-  Utils.not_yet "MSeq.bind" (sa, f)
-
-let delay (f : unit -> 'a t) : 'a t =
-  Utils.not_yet "MSeq.delay" (f ())
+let map (f : 'a -> 'b) (s : 'a t) : 'b t = Seq.map f s
+let return (x : 'a) : 'a t = Seq.return x
+let bind (sa : 'a t) (f : 'a -> 'b t) : 'b t = Seq.concat_map f sa
+let delay (f : unit -> 'a t) : 'a t = f ()
 
 let sum (li : 'a t list) : 'a t =
-  Utils.not_yet "MSeq.sum" li
+  Seq.concat
+    (let rec help = function
+       | [] -> Seq.empty
+       | x :: l -> Seq.cons x (help l)
+     in
+     help li)
 
-let fail : 'a t =
-  MSeq_not_implemented_yet
-
-let one_of (vs : 'a array) : 'a t =
-  Utils.not_yet "MSeq.one_of" vs
-
-let run (s : 'a t) : 'a Seq.t =
-  Utils.not_yet "MSeq.run" s
+let fail : 'a t = Seq.empty
+let one_of (vs : 'a array) : 'a t = return vs.(0)
+let run (s : 'a t) : 'a Seq.t = s
