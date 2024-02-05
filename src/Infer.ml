@@ -79,38 +79,6 @@ module Make (T : Utils.Functor) = struct
     let w = fresh () in
     help w (f w) ty
 
-  (* let rec bind' : *)
-  (*       'a. STLC.ty -> (Constraint.variable -> 'a constraint_) -> 'a constraint_ *)
-  (*     = *)
-  (*  fun ty k -> *)
-  (*   match ty with *)
-  (*   | STLC.Constr (Structure.Var x) -> *)
-  (*       let wx = Var.fresh (Structure.TyVar.name x) in *)
-  (*       exist wx ~struc:(Some (Var x)) (k wx) *)
-  (*   | STLC.Constr (Structure.Arrow (ty1, ty2)) -> *)
-  (*       let w1 = Var.fresh "w1" in *)
-  (*       let w2 = Var.fresh "w2" in *)
-  (*       let w = Var.fresh "w" in *)
-  (*       let c = *)
-  (*         let+ _ = bind ty1 (fun w -> eq w w1) *)
-  (*         and+ _ = bind ty2 (fun w -> eq w w2) *)
-  (*         and+ ck = k w in *)
-  (*         ck *)
-  (*       in *)
-  (*       exist w1 (exist w2 (exist w ~struc:(Some (Arrow (w1, w2))) c)) *)
-  (*   | STLC.Constr (Structure.Prod ts) -> *)
-  (*       let ty1, ty2 = assume_pair ts in *)
-  (*       let w1 = Var.fresh "w1" in *)
-  (*       let w2 = Var.fresh "w2" in *)
-  (*       let w = Var.fresh "w" in *)
-  (*       let c = *)
-  (*         let+ _ = bind ty1 (fun w -> eq w w1) *)
-  (*         and+ _ = bind ty2 (fun w -> eq w w2) *)
-  (*         and+ ck = k w in *)
-  (*         ck *)
-  (*       in *)
-  (*       exist w1 (exist w2 (exist w ~struc:(Some (Prod [ w1; w2 ])) c)) *)
-
   (** This function generates a typing constraint from an untyped term:
       [has_type env t w] generates a constraint [C] which contains [w] as
       a free inference variable, such that [C] has a solution if and only
@@ -189,9 +157,5 @@ module Make (T : Utils.Functor) = struct
           STLC.LetTuple ([ (x1, tyx1); (x2, tyx2) ], t, u)
         in
         exist wx1 (exist wx2 (exist wt ~struc:(Some (Prod [ wx1; wx2 ])) c_let))
-    | Do p ->
-        (* Feel free to postone this until you start looking
-           at random generation. Getting type inference to
-           work on all the other cases is a good first step. *)
-        Utils.not_yet "Infer.has_type: Let case" (env, p, fun () -> has_type)
+    | Untyped.Do p -> Do (T.map (fun t -> has_type env t w) p)
 end
