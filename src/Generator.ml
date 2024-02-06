@@ -57,5 +57,20 @@ module Make (M : Utils.MonadPlus) = struct
        > can be reached by expanding `Do` nodes *at most* `depth` times, but
        > this typically gives a worse generator.)
     *)
-    Utils.not_yet "Generator.typed" depth
+    let _, env, n_cnst = Solver.eval ~log:false Unif.Env.empty constraint_ in
+    let rec helper_typed :
+        type a e. int -> Solver.env -> (a, e) Solver.normal_constraint -> a M.t
+        =
+     fun n env -> function
+      | Solver.NRet v ->
+          if n = 0 then M.return (v (Decode.decode env)) else M.fail
+      | Solver.NErr _ -> M.fail
+      | Solver.NDo c ->
+          if n = 0 then M.fail
+          else
+            M.bind c (fun cnst ->
+                let _, env, n_cnst = Solver.eval ~log:false env cnst in
+                helper_typed (n - 1) env n_cnst)
+    in
+    helper_typed depth env n_cnst
 end

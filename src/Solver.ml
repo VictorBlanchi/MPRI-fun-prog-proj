@@ -58,7 +58,8 @@ module Make (T : Utils.Functor) = struct
             NDo
               (T.map (fun c -> Constraint.Conj (c, Constraint.Ret on_sol2)) c1)
         | NErr e -> NErr e
-        | NDo _ -> Utils.not_yet "Solver and+: NDo NDo case" (x1, x2, c1))
+        | NDo c2 ->
+            NDo (T.map (fun c -> Constraint.Conj (c, Constraint.Do c2)) c1))
 
   let map_err x f =
     match x with
