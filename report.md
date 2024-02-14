@@ -16,4 +16,4 @@
 - Constraint solver in Solver.ml
   - I have equipped "('a, 'e) normal_constraint" with a structure of monad, and I have defined binding operators which I think makes the code of the "eval" function clearer.
 
-- Random Monad in MRand.ml is a combination of the state and the option monads. The state of the monads represent a seed. When we have to choose an element of a list, we compute an index depending on the seed, and we update the seed. If the list is empty, we fail (i.e. we return a None in the option monad). The current implementation keep track of the elements where we failed and removes it.
+- Random Monad in MRand.ml is a combination of the state and the option monads. The state of the monads represent a seed. When we have to choose an element of a list, we compute an index depending on the seed, and we update the seed. If the list is empty, we fail (i.e. we return a None in the option monad). The current implementation keep track of the elements where we failed and remove them.
