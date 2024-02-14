@@ -63,10 +63,10 @@ module Make (M : Utils.MonadPlus) = struct
         =
      fun n env -> function
       | Solver.NRet v ->
-          if n = 0 then M.return (v (Decode.decode env)) else M.fail
+          if n = 1 then M.return (v (Decode.decode env)) else M.fail
       | Solver.NErr _ -> M.fail
       | Solver.NDo c ->
-          if n = 0 then M.fail
+          if n <= 1 then M.fail
           else
             M.bind c (fun cnst ->
                 let _, env, n_cnst = Solver.eval ~log:false env cnst in

@@ -116,9 +116,7 @@ type, this is just an abstract/rigid type variable: `Constr
   Generated constraint:
     ∃?final_type.
       (∃?x ?wt (?warr = ?x -> ?wt).
-        ?final_type = ?warr
-        ∧ decode ?x
-        ∧ (∃(?int = int). ?int = ?x ∧ ?int = ?wt))
+        ?final_type = ?warr ∧ decode ?x ∧ (∃(?w0 = int). ?w0 = ?x ∧ ?w0 = ?wt))
       ∧ decode ?final_type
   
   Inferred type:
@@ -141,49 +139,34 @@ the inference variables.
   Generated constraint:
     ∃?final_type.
       (∃?x ?wt (?warr = ?x -> ?wt).
-        ?final_type = ?warr
-        ∧ decode ?x
-        ∧ (∃(?int = int). ?int = ?x ∧ ?int = ?wt))
+        ?final_type = ?warr ∧ decode ?x ∧ (∃(?w0 = int). ?w0 = ?x ∧ ?w0 = ?wt))
       ∧ decode ?final_type
   
   Constraint solving log:
     ∃?final_type.
       decode ?final_type
       ∧ (∃?x ?wt (?warr = ?x -> ?wt).
-        (∃(?int = int). ?int = ?wt ∧ ?int = ?x)
-        ∧ decode ?x
-        ∧ ?final_type = ?warr)
-    ∃?final_type.
-      decode ?final_type
-      ∧ (∃?x ?wt (?warr = ?x -> ?wt).
-        (∃(?int = int). ?int = ?wt ∧ ?int = ?x)
-        ∧ decode ?x
-        ∧ ?final_type = ?warr)
+        (∃(?w0 = int). ?w0 = ?wt ∧ ?w0 = ?x) ∧ decode ?x ∧ ?final_type = ?warr)
     ∃?x ?final_type.
       decode ?final_type
       ∧ (∃?wt (?warr = ?x -> ?wt).
-        (∃(?int = int). ?int = ?wt ∧ ?int = ?x)
-        ∧ decode ?x
-        ∧ ?final_type = ?warr)
+        (∃(?w0 = int). ?w0 = ?wt ∧ ?w0 = ?x) ∧ decode ?x ∧ ?final_type = ?warr)
     ∃?x ?wt ?final_type.
       decode ?final_type
       ∧ (∃(?warr = ?x -> ?wt).
-        (∃(?int = int). ?int = ?wt ∧ ?int = ?x)
-        ∧ decode ?x
-        ∧ ?final_type = ?warr)
+        (∃(?w0 = int). ?w0 = ?wt ∧ ?w0 = ?x) ∧ decode ?x ∧ ?final_type = ?warr)
     ∃?x ?wt (?warr = ?x -> ?wt) ?final_type.
       decode ?final_type
-      ∧ (∃(?int = int). ?int = ?wt ∧ ?int = ?x)
+      ∧ (∃(?w0 = int). ?w0 = ?wt ∧ ?w0 = ?x)
       ∧ decode ?x
       ∧ ?final_type = ?warr
     ∃?x ?wt (?final_type = ?x -> ?wt).
-      decode ?final_type ∧ (∃(?int = int). ?int = ?wt ∧ ?int = ?x) ∧ decode ?x
-    ∃?x ?wt (?int = int) (?final_type = ?x -> ?wt).
-      decode ?final_type ∧ ?int = ?wt ∧ ?int = ?x ∧ decode ?x
-    ∃?wt (?int = int) (?final_type = ?int -> ?wt).
-      decode ?final_type ∧ ?int = ?wt ∧ decode ?int
-    ∃(?int = int) (?final_type = ?int -> ?int).
-      decode ?final_type ∧ decode ?int
+      decode ?final_type ∧ (∃(?w0 = int). ?w0 = ?wt ∧ ?w0 = ?x) ∧ decode ?x
+    ∃?x ?wt (?w0 = int) (?final_type = ?x -> ?wt).
+      decode ?final_type ∧ ?w0 = ?wt ∧ ?w0 = ?x ∧ decode ?x
+    ∃?wt (?w0 = int) (?final_type = ?w0 -> ?wt).
+      decode ?final_type ∧ ?w0 = ?wt ∧ decode ?w0
+    ∃(?w0 = int) (?final_type = ?w0 -> ?w0). decode ?final_type ∧ decode ?w0
   
   Inferred type:
     int -> int
@@ -202,7 +185,7 @@ the inference variables.
     ∃?final_type.
       (∃?wu (?wt = ?wu -> ?final_type).
         (∃?x ?wt/1 (?warr = ?x -> ?wt/1).
-          ?wt = ?warr ∧ decode ?x ∧ (∃(?int = int). ?int = ?x ∧ ?int = ?wt/1))
+          ?wt = ?warr ∧ decode ?x ∧ (∃(?w0 = int). ?w0 = ?x ∧ ?w0 = ?wt/1))
         ∧ (∃?y ?wt/2 (?warr/1 = ?y -> ?wt/2).
           ?wu = ?warr/1 ∧ decode ?y ∧ ?wt/2 = ?y))
       ∧ decode ?final_type
@@ -210,7 +193,7 @@ the inference variables.
   Error:
       int
     incompatible with
-      β -> α
+      α -> β
   
 
 ## Examples with products
@@ -232,9 +215,8 @@ the inference variables.
             ∧ decode ?y
             ∧ (∃?wu (?wt/3 = ?wu -> ?wt/2).
               ?wt/3 = ?f
-              ∧ (∃?w1.
-                ?w1 = ?x
-                ∧ (∃?w2. ?w2 = ?y ∧ (∃(?wprod = {?w1 * ?w2}). ?wu = ?wprod)))))))
+              ∧ (∃?w1 ?w2 (?wprod = {?w1 * ?w2}).
+                ?wu = ?wprod ∧ ?w1 = ?x ∧ ?w2 = ?y)))))
       ∧ decode ?final_type
   
   Inferred type:
@@ -301,12 +283,6 @@ a lot of those.)
         (∃?wu (?wt/1 = ?wu -> ?wt). ?wu = ?x ∧ ?wt/1 = ?x)
         ∧ decode ?x
         ∧ ?final_type = ?warr)
-    ∃?final_type.
-      decode ?final_type
-      ∧ (∃?x ?wt (?warr = ?x -> ?wt).
-        (∃?wu (?wt/1 = ?wu -> ?wt). ?wu = ?x ∧ ?wt/1 = ?x)
-        ∧ decode ?x
-        ∧ ?final_type = ?warr)
     ∃?x ?final_type.
       decode ?final_type
       ∧ (∃?wt (?warr = ?x -> ?wt).
@@ -349,52 +325,49 @@ fine if your own implementation produces different (sensible) results.
 There are not many programs with depth 3, 4 and 5.
 
   $ minigen --exhaustive --depth 3 --count 100
-  lambda (x/4 : α). x/4
+  lambda (x/2 : α/1). x/2
 
   $ minigen --exhaustive --depth 4 --count 100
-  lambda (v/14 : β/1). lambda (u/19 : α/1). u/19
+  lambda (x/2 : β/6). lambda (x/14 : α/7). x/2
   
-  lambda (v/14 : α/1). lambda (u/19 : γ/1). v/14
+  lambda (x/2 : γ/6). lambda (x/14 : β/6). x/14
 
 An example of random sampling output at higher depth.
 
   $ minigen --seed 42 --depth 6 --count 10
-  lambda (z/90 : β/21). (z/90, lambda (u/90 : α/21). u/90)
-  
-  lambda (v/3d4 : β/dc). (lambda (w/3d4 : β/dc). v/3d4) v/3d4
+  (lambda (x/72e : α/4e -> α/4e). x/72e) (lambda (x/734 : α/4e). x/734)
   
   lambda
-  (x/48b : {δ/110 * γ/110}).
-    let
-    ((y/48b : δ/110), (z/48b : γ/110))
-    =
-    x/48b
-    in lambda (u/48b : β/110). u/48b
+  (x/358a : {γ/265}).
+    let (x/358c : γ/265) = x/358a in lambda (x/3593 : β/26a). x/358a
   
   lambda
-  (w/568 : γ/144).
+  (x/8369 : {α/663 * δ/2f2}).
     lambda
-    (x/569 : {β/144 * α/144}).
-      let ((y/569 : β/144), (z/569 : α/144)) = x/569 in z/569
+    (x/836c : β/601).
+      let ((x/836d : α/663), (y/2bcf : δ/2f2)) = x/8369 in x/8369
   
   lambda
-  (y/58e : α/14c).
-    let (z/58e : δ/14b -> δ/14b) = lambda (u/58e : δ/14b). u/58e in y/58e
+  (x/9359 : δ/353).
+    lambda (x/935c : {γ/6b8}). let (x/935e : γ/6b8) = x/935c in x/935c
   
-  (lambda (u/5f3 : γ/165). u/5f3, lambda (v/5f3 : β/165). v/5f3)
+  lambda (x/c767 : α/9c6). (lambda (x/c76d : α/9c6). x/c76d) x/c767
   
-  (lambda (y/6b2 : α/187). y/6b2, lambda (z/6b2 : δ/186). z/6b2)
-  
-  lambda
-  (u/722 : {δ/19c * γ/19c}).
-    let
-    ((v/722 : δ/19c), (w/722 : γ/19c))
-    =
-    u/722
-    in lambda (x/723 : β/19c). v/722
+  lambda (x/cc5c : γ/94d). (x/cc5c, lambda (x/cc65 : β/960). x/cc65)
   
   lambda
-  (x/7fd : β/1c0).
-    lambda (y/7fd : α/1c0). let (z/7fd : α/1c0) = y/7fd in x/7fd
+  (x/cede : β/97d).
+    lambda
+    (x/cee1 : {α/a18 * δ/4b4}).
+      let ((x/cee2 : α/a18), (y/44f6 : δ/4b4)) = x/cee1 in y/44f6
   
-  lambda (x/b58 : δ/283). (lambda (y/b58 : γ/283). y/b58, x/b58)
+  lambda
+  (x/fd88 : β/ba7).
+    lambda
+    (x/fd8b : α/c69).
+      lambda (x/fd8e : δ/5d0). lambda (x/fd91 : γ/b8c). x/fd8e
+  
+  lambda (x/10037 : δ/5e3). (x/10037, lambda (x/10040 : γ/bae). x/10040)
+  
+  lambda
+  (x/116f9 : β/cdb). lambda (x/116fc : β/cdb -> α/db7). x/116fc x/116f9
